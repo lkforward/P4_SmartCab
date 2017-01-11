@@ -1,3 +1,11 @@
+"""
+[Obj]: updated from 'agent_v0.py'
+
+Use optimized (instead of "default")learning;
+Remote unnecessary comments; 
+In "learn()", gamma term in Q-learning was removed. 
+"""
+
 import random
 import math
 from environment import Agent, Environment
@@ -46,11 +54,11 @@ class LearningAgent(Agent):
             self.epsilon = 0.0
             self.alpha = 0.0
         else:  
-            # kliu14: optimized learning
-#            self.epsilon = self.epsilon-0.05 if self.epsilon>0.05 else 0.0
-#            self.alpha = self.alpha-0.005 if self.alpha>0.005 else 0.0
-            # kliu14: default learning
-            self.epsilon -= 0.05
+            # optimized learning
+            self.epsilon = self.epsilon-0.05 if self.epsilon>0.05 else 0.0
+            self.alpha = self.alpha-0.005 if self.alpha>0.005 else 0.0
+            # default learning
+            # self.epsilon -= 0.05
 
         return None
 
@@ -68,19 +76,10 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set 'state' as a tuple of relevant data for the agent 
-        dir_oncoming = inputs['oncoming']
-        dir_left = inputs['left']
-        dir_right = inputs['right']
-    
-        is_right_right = (inputs['right'] == 'right')
         is_oncoming_left = (inputs['oncoming'] == 'left')
         is_left_forward = (inputs['left'] == 'forward')        
         is_light_green = (inputs['light'] == 'green')
         
-#        state = (waypoint, is_light_green, is_oncoming_forward, \
-#                is_right_forward, \
-#                deadline)
-#        state = (waypoint, is_light_green, dir_oncoming, dir_left, dir_right)
         state = (waypoint, is_light_green, is_oncoming_left, \
                 is_left_forward)
 
@@ -95,10 +94,6 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-
-#        maxQ = None
-#        if state in self.Q:
-#            maxQ = max(self.Q[state].values())
             
         maxQ = max(self.Q[state].values()) if state in self.Q else None
 
@@ -115,12 +110,11 @@ class LearningAgent(Agent):
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
         
-        # kliu14:
         if state not in self.Q:
-            # kliu14: default learning
-            self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
-            # kliu14: optimized learning
-            #self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
+            # default learning:
+            # self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
+            # optimized learning:
+            self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
 
         return
 
@@ -141,17 +135,16 @@ class LearningAgent(Agent):
         # When learning, choose a random action with 'epsilon' probability
         #   Otherwise, choose an action with the highest Q-value for the current state
 
-        # kliu14:
         if self.learning:
             tmp = random.uniform(0,1)
             if tmp < self.epsilon:
                 action = random.choice(self.env.valid_actions)
             else:
                 maxq = self.get_maxQ(state)
-                # kliu14: default learning
-                action = self.Q[state].keys()[self.Q[state].values().index(maxq)]
-                #kliu14: optimized learning
-                #action = random.choice([act for act,score in self.Q[state].iteritems() if score==maxq])
+                # default learning
+                #action = self.Q[state].keys()[self.Q[state].values().index(maxq)]
+                # optimized learning
+                action = random.choice([act for act,score in self.Q[state].iteritems() if score==maxq])
         else: 
             action = random.choice(self.env.valid_actions)
  
@@ -169,12 +162,10 @@ class LearningAgent(Agent):
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
 
-        # kliu14:
-        gamma = 0.0
         if self.previous_state is not None:             
             self.Q[self.previous_state][self.previous_action] = \
                 (1 - self.alpha) * self.Q[self.previous_state][self.previous_action] + \
-                self.alpha * (self.previous_reward + gamma * self.get_maxQ(state))
+                self.alpha * self.previous_reward
         
         self.previous_state = state
         self.previous_action = action
@@ -218,7 +209,7 @@ def run():
     #    * alpha   - continuous value for the learning rate, default is 0.5
     
     #agent = env.create_agent(LearningAgent)
-    #kliu14: default / optimized learning
+    # default / optimized learning
     agent = env.create_agent(LearningAgent, learning=True)
     
     ##############
@@ -227,7 +218,7 @@ def run():
     #   enforce_deadline - set to True to enforce a deadline metric
     
     #env.set_primary_agent(agent)
-    #kliu14: default / optimized learning
+    # default / optimized learning
     env.set_primary_agent(agent, enforce_deadline=True)
 
     ##############
@@ -239,10 +230,10 @@ def run():
     #   optimized    - set to True to change the default log file name
     
     #sim = Simulator(env)
-    # kliu14: default learning
-    sim = Simulator(env, update_delay=0.01, log_metrics=True)
-    # kliu14: optimized
-    # sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=True)
+    # default learning:
+    #sim = Simulator(env, update_delay=0.01, log_metrics=True)
+    # optimized: 
+    sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=True)
     
     ##############
     # Run the simulator
@@ -251,7 +242,6 @@ def run():
     #   n_test     - discrete number of testing trials to perform, default is 0
     
     #sim.run()
-    #kliu14:
     sim.run(n_test=10)
 
 
