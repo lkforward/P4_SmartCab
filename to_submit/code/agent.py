@@ -1,11 +1,3 @@
-"""
-[Obj]: updated from 'agent_v0.py'
-
-Use optimized (instead of "default")learning;
-Remote unnecessary comments; 
-In "learn()", gamma term in Q-learning was removed. 
-"""
-
 import random
 import math
 from environment import Agent, Environment
