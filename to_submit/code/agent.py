@@ -102,11 +102,12 @@ class LearningAgent(Agent):
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
         
-        if state not in self.Q:
-            # default learning:
-            # self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
-            # optimized learning:
-            self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
+        if self.learning:
+            if state not in self.Q:
+                # default learning:
+                # self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
+                # optimized learning:
+                self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
 
         return
 
@@ -154,16 +155,16 @@ class LearningAgent(Agent):
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
 
-        if self.previous_state is not None:             
-            self.Q[self.previous_state][self.previous_action] = \
-                (1 - self.alpha) * self.Q[self.previous_state][self.previous_action] + \
-                self.alpha * self.previous_reward
+        if self.learning:
+            if self.previous_state is not None:             
+                self.Q[self.previous_state][self.previous_action] = \
+                    (1 - self.alpha) * self.Q[self.previous_state][self.previous_action] + \
+                    self.alpha * self.previous_reward
+            
+            self.previous_state = state
+            self.previous_action = action
+            self.previous_reward = reward
         
-        self.previous_state = state
-        self.previous_action = action
-        self.previous_reward = reward
-        
-
         return
 
 
