@@ -4657,22 +4657,21 @@ Learning factor $\alpha$ also decrease from 0.5 to 0.0 linearly. The tolerance f
 <p>Most of the rules learned through Q-learning(recorded in <code>'sim_improved-learning.txt'</code>) is correct. For example:</p>
 <ul>
 <li>('right', True, True, False)
--- forward : 2.50;
--- right : 2.53;
--- None : 2.48;
--- left : 2.45;
+-- forward : 1.76;
+-- right : 1.91;
+-- None : 1.83;
+-- left : 1.75;
 For this state, the way to the next point is "right". Since the light is green (<code>is_light_green=True</code>), the agent can move to right, and the Q-value for "right" is indeed highest in the table. So the policy in this case is consistent with the expectation. </li>
 </ul>
-<p>But there are few cases the actions need improving. For example:</p>
+<p>As another example,</p>
 <ul>
 <li>('right', True, True, True)
--- forward : 17.95
--- right : 11.22
--- None : 15.62
--- left : 17.54
-As the light is green (<code>is_light_green=True</code>), the car should move to right as it is supposed to go. But the Q-score for "right" is not highest. </li>
+-- forward : 11.94
+-- right : 12.69
+-- None : 7.94
+-- left : 11.11
+As the light is green (<code>is_light_green=True</code>), the car should move to right as it is supposed to go, and the Q-score corresponding to "right" is the highest. </li>
 </ul>
-<p>In this case, moving to right is not the action with the highest Q-value might because a training case for the same situation ('right', True, True, True) occurred close to the deadline and thus had a high penalty. Remember the feature <code>deadline</code> is not included in the state, so the policy may not take into account the dependency on the time of the action. Not being able to consider the time information in the learning process is a major limitation of the current algorithm.</p>
 
 </div>
 </div>
