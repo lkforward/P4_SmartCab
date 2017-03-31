@@ -79,14 +79,8 @@ class LearningAgent(Agent):
         if testing: 
             self.epsilon = 0.0
             self.alpha = 0.0
-        else:  
-            # optimized learning
-            # self.epsilon = self.epsilon-0.05 if self.epsilon>0.05 else 0.0
-            # self.alpha = self.alpha-0.005 if self.alpha>0.005 else 0.0
-            # default learning
-            # self.epsilon -= 0.05
+        else:
             if self.optimized:
-                # self.epsilon = self.epsilon - 0.05 if self.epsilon > 0.05 else 0.0
                 self.epsilon = self.eps_func(self.epsilon)
                 self.alpha = self.alpha - 0.0025 if self.alpha > 0.0025 else 0.0
             else:
@@ -150,9 +144,7 @@ class LearningAgent(Agent):
         
         if self.learning:
             if state not in self.Q:
-                # default learning:
                 self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
-                # optimized learning:
                 # self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
 
         return
@@ -180,10 +172,7 @@ class LearningAgent(Agent):
                 action = random.choice(self.env.valid_actions)
             else:
                 maxq = self.get_maxQ(state)
-                # default learning
-                #action = self.Q[state].keys()[self.Q[state].values().index(maxq)]
-                # optimized learning
-                #action = random.choice([act for act,score in self.Q[state].iteritems() if score==maxq])
+
                 if self.optimized:
                     action = random.choice([act for act, score in self.Q[state].iteritems() if score == maxq])
                 else:
@@ -263,7 +252,6 @@ def run():
             #    * alpha   - continuous value for the learning rate, default is 0.5
 
             #agent = env.create_agent(LearningAgent)
-            # default / optimized learning
             agent = env.create_agent(LearningAgent, learning=True, optimized=True, \
                                      eps_func=test_func)
 
@@ -273,7 +261,6 @@ def run():
             #   enforce_deadline - set to True to enforce a deadline metric
 
             #env.set_primary_agent(agent)
-            # default / optimized learning
             env.set_primary_agent(agent, enforce_deadline=True)
 
             ##############
@@ -285,9 +272,6 @@ def run():
             #   optimized    - set to True to change the default log file name
 
             #sim = Simulator(env)
-            # default learning:
-            #sim = Simulator(env, update_delay=0.01, log_metrics=True)
-            # optimized:
             sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=True)
 
         # For a default learner:
@@ -305,10 +289,6 @@ def run():
 
         #sim.run()
         sim.run(n_test=10)
-
-        # _, testing_data = read_log(csv_filename)
-        # reliability.append(calculate_reliability(testing_data))
-        # safety.append(calculate_safety(testing_data))
 
 
 if __name__ == '__main__':
