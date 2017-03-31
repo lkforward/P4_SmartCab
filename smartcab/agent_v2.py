@@ -10,35 +10,11 @@ from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
 
-import numpy as np
-
-## Define some decay functions for the epsilon factor:
-def f1(eps):
-    return eps - 0.0025 if eps > 0.0025 else 0.0
-
-
-def f2(eps):
-    return eps - 0.005 if eps > 0.005 else 0.0
-
-
-def f3(eps):
-    return eps * 0.25
-
-
-def f4(eps):
-    return eps * 0.50
-
-
-def f5(eps):
-    return eps * np.exp(-0.025)
-
-
 class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """ 
 
-    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.5, \
-                 optimized=True, eps_func=f1):
+    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.5):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment 
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -48,10 +24,6 @@ class LearningAgent(Agent):
         self.Q = dict()          # Create a Q-table which will be a dictionary of tuples
         self.epsilon = epsilon   # Random exploration factor
         self.alpha = alpha       # Learning factor
-
-        # Add a parameter to instruct the training parameters
-        self.optimized = optimized
-        self.eps_func = eps_func
 
         ###########
         ## TO DO ##
@@ -81,16 +53,10 @@ class LearningAgent(Agent):
             self.alpha = 0.0
         else:  
             # optimized learning
-            # self.epsilon = self.epsilon-0.05 if self.epsilon>0.05 else 0.0
-            # self.alpha = self.alpha-0.005 if self.alpha>0.005 else 0.0
+            self.epsilon = self.epsilon-0.05 if self.epsilon>0.05 else 0.0
+            self.alpha = self.alpha-0.005 if self.alpha>0.005 else 0.0
             # default learning
             # self.epsilon -= 0.05
-            if self.optimized:
-                # self.epsilon = self.epsilon - 0.05 if self.epsilon > 0.05 else 0.0
-                self.epsilon = self.eps_func(self.epsilon)
-                self.alpha = self.alpha - 0.0025 if self.alpha > 0.0025 else 0.0
-            else:
-                self.epsilon -= 0.05
 
         return None
 
@@ -107,19 +73,13 @@ class LearningAgent(Agent):
         ########### 
         ## TO DO ##
         ###########
-        # Set 'state' as a tuple of relevant data for the agent
-
-        # is_oncoming_left = (inputs['oncoming'] == 'left')
-        # is_left_forward = (inputs['left'] == 'forward')
-        # is_light_green = (inputs['light'] == 'green')
-        #
-        # state = (waypoint, is_light_green, is_oncoming_left, \
-        #         is_left_forward)
-
-        dir_oncoming = inputs['oncoming']
-        dir_left = inputs['left']
-        is_light_green = (inputs['light']=='green')
-        state = (waypoint, is_light_green, dir_oncoming, dir_left)
+        # Set 'state' as a tuple of relevant data for the agent 
+        is_oncoming_left = (inputs['oncoming'] == 'left')
+        is_left_forward = (inputs['left'] == 'forward')        
+        is_light_green = (inputs['light'] == 'green')
+        
+        state = (waypoint, is_light_green, is_oncoming_left, \
+                is_left_forward)
 
         return state
 
@@ -151,9 +111,9 @@ class LearningAgent(Agent):
         if self.learning:
             if state not in self.Q:
                 # default learning:
-                self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
+                # self.Q[state] = {None:0.0, 'forward':0.0, 'left':0.0, 'right':0.0}
                 # optimized learning:
-                # self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
+                self.Q[state] = {None:20.0, 'forward':20.0, 'left':20.0, 'right':20.0}
 
         return
 
@@ -183,12 +143,7 @@ class LearningAgent(Agent):
                 # default learning
                 #action = self.Q[state].keys()[self.Q[state].values().index(maxq)]
                 # optimized learning
-                #action = random.choice([act for act,score in self.Q[state].iteritems() if score==maxq])
-                if self.optimized:
-                    action = random.choice([act for act, score in self.Q[state].iteritems() if score == maxq])
-                else:
-                    action = self.Q[state].keys()[self.Q[state].values().index(maxq)]
-
+                action = random.choice([act for act,score in self.Q[state].iteritems() if score==maxq])
         else: 
             action = random.choice(self.env.valid_actions)
  
@@ -237,78 +192,56 @@ def run():
     """ Driving function for running the simulation. 
         Press ESC to close the simulation, or [SPACE] to pause the simulation. """
 
-    is_optimized = True
-    alpha_func = [f5]
-    # safety = []
-    # reliability = []
-    # csv_filename = "sim_improved-learning.csv"
+    ##############
+    # Create the environment
+    # Flags:
+    #   verbose     - set to True to display additional output from the simulation
+    #   num_dummies - discrete number of dummy agents in the environment, default is 100
+    #   grid_size   - discrete number of intersections (columns, rows), default is (8, 6)
+    env = Environment()
+    
+    ##############
+    # Create the driving agent
+    # Flags:
+    #   learning   - set to True to force the driving agent to use Q-learning
+    #    * epsilon - continuous value for the exploration factor, default is 1
+    #    * alpha   - continuous value for the learning rate, default is 0.5
+    
+    #agent = env.create_agent(LearningAgent)
+    # default / optimized learning
+    agent = env.create_agent(LearningAgent, learning=True)
+    
+    ##############
+    # Follow the driving agent
+    # Flags:
+    #   enforce_deadline - set to True to enforce a deadline metric
+    
+    #env.set_primary_agent(agent)
+    # default / optimized learning
+    env.set_primary_agent(agent, enforce_deadline=True)
 
-    for test_func in alpha_func:
-        ##############
-        # Create the environment
-        # Flags:
-        #   verbose     - set to True to display additional output from the simulation
-        #   num_dummies - discrete number of dummy agents in the environment, default is 100
-        #   grid_size   - discrete number of intersections (columns, rows), default is (8, 6)
-        env = Environment()
-
-        # For an optimized learner:
-        if is_optimized:
-
-            ##############
-            # Create the driving agent
-            # Flags:
-            #   learning   - set to True to force the driving agent to use Q-learning
-            #    * epsilon - continuous value for the exploration factor, default is 1
-            #    * alpha   - continuous value for the learning rate, default is 0.5
-
-            #agent = env.create_agent(LearningAgent)
-            # default / optimized learning
-            agent = env.create_agent(LearningAgent, learning=True, optimized=True, \
-                                     eps_func=test_func)
-
-            ##############
-            # Follow the driving agent
-            # Flags:
-            #   enforce_deadline - set to True to enforce a deadline metric
-
-            #env.set_primary_agent(agent)
-            # default / optimized learning
-            env.set_primary_agent(agent, enforce_deadline=True)
-
-            ##############
-            # Create the simulation
-            # Flags:
-            #   update_delay - continuous time (in seconds) between actions, default is 2.0 seconds
-            #   display      - set to False to disable the GUI if PyGame is enabled
-            #   log_metrics  - set to True to log trial and simulation results to /logs
-            #   optimized    - set to True to change the default log file name
-
-            #sim = Simulator(env)
-            # default learning:
-            #sim = Simulator(env, update_delay=0.01, log_metrics=True)
-            # optimized:
-            sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=True)
-
-        # For a default learner:
-        else:
-            agent = env.create_agent(LearningAgent, learning=True, optimized=False)
-            env.set_primary_agent(agent, enforce_deadline=True)
-            sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=False)
-
-
-        ##############
-        # Run the simulator
-        # Flags:
-        #   tolerance  - epsilon tolerance before beginning testing, default is 0.05
-        #   n_test     - discrete number of testing trials to perform, default is 0
-
-        #sim.run()
-        sim.run(n_test=10)
-
-        # _, testing_data = read_log(csv_filename)
-        # reliability.append(calculate_reliability(testing_data))
-        # safety.append(calculate_safety(testing_data))
+    ##############
+    # Create the simulation
+    # Flags:
+    #   update_delay - continuous time (in seconds) between actions, default is 2.0 seconds
+    #   display      - set to False to disable the GUI if PyGame is enabled
+    #   log_metrics  - set to True to log trial and simulation results to /logs
+    #   optimized    - set to True to change the default log file name
+    
+    #sim = Simulator(env)
+    # default learning:
+    #sim = Simulator(env, update_delay=0.01, log_metrics=True)
+    # optimized: 
+    sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=True)
+    
+    ##############
+    # Run the simulator
+    # Flags:
+    #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
+    #   n_test     - discrete number of testing trials to perform, default is 0
+    
+    #sim.run()
+    sim.run(n_test=10)
 
 
 if __name__ == '__main__':
