@@ -226,8 +226,8 @@ def run():
     """ Driving function for running the simulation. 
         Press ESC to close the simulation, or [SPACE] to pause the simulation. """
 
-    is_optimized = True
-    alpha_func = [f5]
+    is_optimized = False
+    alpha_func = [f1]
     # safety = []
     # reliability = []
     # csv_filename = "sim_improved-learning.csv"
